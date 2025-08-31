@@ -1,0 +1,38 @@
+version: '3'
+
+services:
+  postgres: # See Also: https://hub.docker.com/_/mysql
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=developer
+      - POSTGRES_USER=developer
+      - POSTGRES_PASSWORD=devbpassword
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:25000:5432"
+  redis: # See Also: https://hub.docker.com/_/redis
+    image: redis:latest
+    ports:
+      - "127.0.0.1:25100:6379"
+    command: redis-server --save ""
+  
+  api:
+    build: ./app
+    ports:
+      - "80:8000"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - DATABASE_URL=postgresql://developer:devbpassword@postgres:5432/developer
+      - REDIS_URL=redis://redis:6379/0
+    # command: ./wait-for-it.sh postgres:5432 -- uvicorn main:app --reload --host 0.0.0.0
+    command: |
+      sh -c "./wait-for-it.sh postgres:5432 --
+             ./wait-for-it.sh redis:6379 --
+             uvicorn main:app --reload --host 0.0.0.0"
+
+volumes:
+  postgres_data:
+    driver: local
