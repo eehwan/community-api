@@ -56,7 +56,7 @@ class PostService:
         posts = post_repository.get_posts_by_board(db, board_id, limit, offset)
         return posts
     
-    def update_post(self, db: Session, post_id: int, user_id: int, title: str = None, content: str = None):
+    def update_post(self, db: Session, post_id: int, user_id: int, title: str, content: str):
         post = post_repository.get_post_by_id(db, post_id)
         if not post:
             raise HTTPException(
