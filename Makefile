@@ -16,7 +16,8 @@ up:
 down:
 	docker compose down --remove-orphans
 
-clean: down
+clean:
+	docker compose down -v --remove-orphans
 	find . -name '*.pyc' -exec rm -f {} +
 	find . -name '*.pyo' -exec rm -f {} +
 	find . -name '*~' -exec rm -f {} +

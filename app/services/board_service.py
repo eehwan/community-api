@@ -74,6 +74,5 @@ class BoardService:
             )
         
         board_repository.delete_board(db, board)
-        return board
 
 board_service = BoardService()

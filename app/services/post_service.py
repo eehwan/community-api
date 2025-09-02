@@ -87,6 +87,5 @@ class PostService:
             )
         
         post_repository.delete_post(db, post)
-        return post
 
 post_service = PostService()

@@ -7,26 +7,26 @@ from services.post_service import post_service
 from lib.dependencies import get_current_user
 from entities.user import User
 
-router = APIRouter(prefix="/posts", tags=["posts"])
+router = APIRouter(tags=["posts"])
 
 class PostCreateRequest(BaseModel):
     title: str
     content: str
-    board_id: int
 
 class PostUpdateRequest(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
 
-@router.post("/")
+@router.post("/boards/{board_id}/posts")
 async def create_post(
+    board_id: int,
     request: PostCreateRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return post_service.create_post(db, request.title, request.content, request.board_id, current_user.id)
+    return post_service.create_post(db, request.title, request.content, board_id, current_user.id)
 
-@router.get("/{post_id}")
+@router.get("/posts/{post_id}")
 async def get_post(
     post_id: int,
     current_user: User = Depends(get_current_user),
@@ -34,7 +34,7 @@ async def get_post(
 ):
     return post_service.get_post(db, post_id, current_user.id)
 
-@router.get("/board/{board_id}")
+@router.get("/boards/{board_id}/posts")
 async def list_posts(
     board_id: int,
     limit: int = Query(20, ge=1, le=100),
@@ -44,7 +44,7 @@ async def list_posts(
 ):
     return post_service.list_posts(db, board_id, current_user.id, limit, offset)
 
-@router.put("/{post_id}")
+@router.put("/posts/{post_id}")
 async def update_post(
     post_id: int,
     request: PostUpdateRequest,
@@ -53,7 +53,7 @@ async def update_post(
 ):
     return post_service.update_post(db, post_id, current_user.id, request.title, request.content)
 
-@router.delete("/{post_id}")
+@router.delete("/posts/{post_id}")
 async def delete_post(
     post_id: int,
     current_user: User = Depends(get_current_user),
