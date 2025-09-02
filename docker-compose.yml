@@ -27,7 +27,6 @@ services:
     environment:
       - DATABASE_URL=postgresql://developer:devbpassword@postgres:5432/developer
       - REDIS_URL=redis://redis:6379/0
-    # command: ./wait-for-it.sh postgres:5432 -- uvicorn main:app --reload --host 0.0.0.0
     command: |
       sh -c "./wait-for-it.sh postgres:5432 --
              ./wait-for-it.sh redis:6379 --
