@@ -1,4 +1,5 @@
-from typing import List
+from typing import List, Optional, Dict, Any
+from datetime import datetime
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from repositories.post_repository import post_repository
@@ -39,7 +40,7 @@ class PostService:
         
         return post
     
-    def list_posts(self, db: Session, board_id: int, user_id: int, limit: int = 20, offset: int = 0):
+    def list_posts(self, db: Session, board_id: int, user_id: int, cursor_time: Optional[datetime] = None, cursor_id: Optional[int] = None, limit: int = 20) -> Dict[str, Any]:
         board = board_repository.get_board_by_id(db, board_id)
         if not board:
             raise HTTPException(
@@ -53,8 +54,20 @@ class PostService:
                 detail="Access denied"
             )
         
-        posts = post_repository.get_posts_by_board(db, board_id, limit, offset)
-        return posts
+        posts = post_repository.get_posts_by_board(db, board_id, cursor_time, cursor_id, limit)
+        
+        next_cursor_time = None
+        next_cursor_id = None
+        if len(posts) == limit:
+            last_post = posts[-1]
+            next_cursor_time = last_post.created_at
+            next_cursor_id = last_post.id
+        
+        return {
+            "posts": posts,
+            "next_cursor_time": next_cursor_time,
+            "next_cursor_id": next_cursor_id
+        }
     
     def update_post(self, db: Session, post_id: int, user_id: int, title: str, content: str):
         post = post_repository.get_post_by_id(db, post_id)

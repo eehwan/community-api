@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from pydantic import BaseModel, Field
 
@@ -21,3 +21,8 @@ class PostResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+class PostListResponse(BaseModel):
+    posts: List[PostResponse]
+    next_cursor_time: Optional[datetime] = None
+    next_cursor_id: Optional[int] = None

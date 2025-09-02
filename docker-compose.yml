@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  postgres: # See Also: https://hub.docker.com/_/mysql
+  postgres:
     image: postgres:13
     environment:
       - POSTGRES_DB=developer
@@ -11,7 +11,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "127.0.0.1:25000:5432"
-  redis: # See Also: https://hub.docker.com/_/redis
+  redis:
     image: redis:latest
     ports:
       - "127.0.0.1:25100:6379"
@@ -24,6 +24,8 @@ services:
     depends_on:
       - postgres
       - redis
+    volumes:  # for reload
+      - ./app:/app
     environment:
       - DATABASE_URL=postgresql://developer:devbpassword@postgres:5432/developer
       - REDIS_URL=redis://redis:6379/0

@@ -19,11 +19,15 @@ class BoardRepository:
         return db.query(Board).filter(Board.name == name).first()
     
     def get_accessible_boards(self, db: Session, user_id: int, limit: int = 20, offset: int = 0) -> List[Board]:
+        post_count_sq = db.query(
+            Post.board_id.label("board_id"),
+            func.count(Post.id).label("post_count")
+        ).group_by(Post.board_id).subquery()
+
         return db.query(Board)\
-            .filter((Board.public == True) | (Board.owner_id == user_id))\
-            .order_by(func.count(Post.id).desc())\
-            .outerjoin(Post)\
-            .group_by(Board.id)\
+            .outerjoin(post_count_sq, post_count_sq.c.board_id == Board.id)\
+            .filter((Board.public.is_(True)) | (Board.owner_id == user_id))\
+            .order_by(func.coalesce(post_count_sq.c.post_count, 0).desc(), Board.id)\
             .limit(limit).offset(offset).all()
     
     def update_board(self, db: Session, board: Board, name: str = None, public: bool = None) -> Board:

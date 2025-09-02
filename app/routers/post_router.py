@@ -1,11 +1,12 @@
-from typing import List
+from typing import List, Optional
+from datetime import datetime
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from infra.database import get_db
 from services.post_service import post_service
 from lib.dependencies import get_current_user
 from entities.user import User
-from schemas.post import PostCreateRequest, PostUpdateRequest, PostResponse
+from schemas.post import PostCreateRequest, PostUpdateRequest, PostResponse, PostListResponse
 
 router = APIRouter(tags=["posts"])
 
@@ -26,15 +27,16 @@ async def get_post(
 ):
     return post_service.get_post(db, post_id, current_user.id)
 
-@router.get("/boards/{board_id}/posts", response_model=List[PostResponse])
+@router.get("/boards/{board_id}/posts", response_model=PostListResponse)
 async def list_posts(
     board_id: int,
     limit: int = Query(20, ge=1, le=100),
-    offset: int = Query(0, ge=0),
+    cursor_time: Optional[datetime] = Query(None),
+    cursor_id: Optional[int] = Query(None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return post_service.list_posts(db, board_id, current_user.id, limit, offset)
+    return post_service.list_posts(db, board_id, current_user.id, cursor_time, cursor_id, limit)
 
 @router.put("/posts/{post_id}", response_model=PostResponse)
 async def update_post(
