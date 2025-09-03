@@ -1,10 +1,13 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from entities.board import Board
 from entities.post import Post
+from infra.redis_client import redis_client
 
 class BoardRepository:
+    POST_COUNT_PREFIX = "board:post_count:"
+    
     def create_board(self, db: Session, name: str, public: bool, owner_id: int) -> Board:
         board = Board(name=name, public=public, owner_id=owner_id)
         db.add(board)
@@ -19,15 +22,9 @@ class BoardRepository:
         return db.query(Board).filter(Board.name == name).first()
     
     def get_accessible_boards(self, db: Session, user_id: int, limit: int = 20, offset: int = 0) -> List[Board]:
-        post_count_sq = db.query(
-            Post.board_id.label("board_id"),
-            func.count(Post.id).label("post_count")
-        ).group_by(Post.board_id).subquery()
-
         return db.query(Board)\
-            .outerjoin(post_count_sq, post_count_sq.c.board_id == Board.id)\
             .filter((Board.public.is_(True)) | (Board.owner_id == user_id))\
-            .order_by(func.coalesce(post_count_sq.c.post_count, 0).desc(), Board.id)\
+            .order_by(Board.post_count.desc(), Board.id)\
             .limit(limit).offset(offset).all()
     
     def update_board(self, db: Session, board: Board, name: str = None, public: bool = None) -> Board:
@@ -42,5 +39,31 @@ class BoardRepository:
     def delete_board(self, db: Session, board: Board):
         db.delete(board)
         db.commit()
+    
+    def increment_post_count_delta(self, board_id: int) -> None:
+        """Redis에 게시글 수 증가 기록"""
+        redis_client.hincrby("board:post_count", str(board_id), 1)
+    
+    def decrement_post_count_delta(self, board_id: int) -> None:
+        """Redis에 게시글 수 감소 기록"""
+        redis_client.hincrby("board:post_count", str(board_id), -1)
+    
+    def get_all_post_count_deltas(self) -> Dict[int, int]:
+        """모든 게시판의 증감량 조회"""
+        deltas_str = redis_client.hgetall("board:post_count")
+        return {int(board_id): int(delta) for board_id, delta in deltas_str.items() if int(delta) != 0}
+    
+    def update_board_post_counts(self, db: Session) -> None:
+        """Redis 증감량을 읽어서 DB의 post_count 업데이트"""
+        deltas = self.get_all_post_count_deltas()
+        
+        for board_id, delta in deltas.items():
+            board = self.get_board_by_id(db, board_id)
+            if board:
+                board.post_count = max(0, board.post_count + delta)
+        
+        if deltas:
+            redis_client.delete("board:post_count")
+            db.commit()
 
 board_repository = BoardRepository()

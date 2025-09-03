@@ -10,6 +10,7 @@ class Board(Base):
     name = Column(String(100), unique=True, index=True, nullable=False)
     public = Column(Boolean, default=True, nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    post_count = Column(Integer, default=0, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     owner = relationship("User", back_populates="boards")

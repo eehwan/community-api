@@ -15,6 +15,7 @@ class BoardResponse(BaseModel):
     name: str
     public: bool
     owner_id: int
+    post_count: int
     created_at: datetime
     
     class Config:
