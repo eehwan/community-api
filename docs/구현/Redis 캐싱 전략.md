@@ -116,6 +116,6 @@ def init_post_count():
         board.post_count = actual_count
 ```
 
-## Cron 설정
+## 배치 작업 연동 (미구현)
 
-구현 예정
+추후 Airflow 또는 Cron Job으로 주기적 동기화 예정

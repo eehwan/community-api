@@ -39,16 +39,15 @@ make shell-postgres
 
 ## 관리 명령어
 
-### 게시글 수 동기화
+### 게시글 수 동기화 (미구현)
 Redis에 누적된 게시글 증감량을 DB에 반영합니다.
 
 ```bash
 # 수동 실행
 make sync-post-count
-
-# Cron 설정 (10분마다)
-*/10 * * * * cd /path/to/project && make sync-post-count
 ```
+
+향후 Airflow 또는 Cron Job으로 주기적 실행 예정
 
 ## API 문서
 
