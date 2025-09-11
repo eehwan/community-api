@@ -1,6 +1,6 @@
 from typing import List, Optional, Dict
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, desc, and_
 from entities.board import Board
 from entities.post import Post
 from infra.redis_client import redis_client
@@ -22,9 +22,11 @@ class BoardRepository:
         return db.query(Board).filter(Board.name == name).first()
     
     def get_accessible_boards(self, db: Session, user_id: int, limit: int = 20, offset: int = 0) -> List[Board]:
-        return db.query(Board)\
-            .filter((Board.public.is_(True)) | (Board.owner_id == user_id))\
-            .order_by(Board.post_count.desc(), Board.id)\
+        public_q = db.query(Board).filter(and_(Board.public.is_(True), Board.owner_id != user_id))
+        mine_q = db.query(Board).filter(Board.owner_id == user_id)
+        
+        return public_q.union_all(mine_q)\
+            .order_by(desc(Board.post_count), Board.id)\
             .limit(limit).offset(offset).all()
     
     def update_board(self, db: Session, board: Board, name: str = None, public: bool = None) -> Board:

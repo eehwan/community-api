@@ -39,7 +39,7 @@ make shell-postgres
 
 ## 관리 명령어
 
-### 게시글 수 동기화 (미구현)
+### 게시글 수 동기화
 Redis에 누적된 게시글 증감량을 DB에 반영합니다.
 
 ```bash
@@ -61,8 +61,8 @@ make sync-post-count
 - [API 설계](./docs/아키텍처/API%20설계.md)
 
 ### 구현
-- [Redis 캐싱 전략](./docs/구현/Redis%20캐싱%20전략.md)
 - [페이지네이션 구현](./docs/구현/페이지네이션%20구현.md)
+- [Redis 캐싱 전략](./docs/구현/Redis%20캐싱%20전략.md)
 
 ## 프로젝트 구조
 
