@@ -23,17 +23,19 @@
 sequenceDiagram
     participant Client
     participant AuthRouter
-    participant UserService
+    participant AuthService
     participant SessionRepository
-    participant Redis
+    participant PostgreSQL
     
     Client->>AuthRouter: POST /auth/login
-    AuthRouter->>UserService: login(email, password)
-    UserService->>SessionRepository: create_session(user_id)
-    SessionRepository->>Redis: SET session:{id}
-    SessionRepository-->>UserService: access_token
-    UserService-->>AuthRouter: LoginResponse
-    AuthRouter-->>Client: {access_token, user_info}
+    AuthRouter->>AuthService: login(email, password, device_info)
+    AuthService->>SessionRepository: create_device_session()
+    SessionRepository->>PostgreSQL: INSERT INTO sessions
+    PostgreSQL-->>SessionRepository: session_id
+    SessionRepository-->>AuthService: session_id
+    AuthService-->>AuthRouter: {access_token, refresh_token}
+    AuthRouter->>AuthRouter: Set RT as HttpOnly cookie
+    AuthRouter-->>Client: {access_token, token_type, user_id, expires_in}
 ```
 
 #### 엔드포인트 목록
@@ -41,9 +43,13 @@ sequenceDiagram
 |--------|------|------|-------------|-------------|
 | POST | `/auth/signup` | 회원가입 | SignupRequest | SignupResponse |
 | POST | `/auth/login` | 로그인 | LoginRequest | LoginResponse |
-| POST | `/auth/logout` | 로그아웃 | - | 204 No Content |
+| POST | `/auth/refresh` | 토큰 갱신 | Cookie(RT) | RefreshResponse |
+| POST | `/auth/logout` | 현재 세션 로그아웃 | - | 204 No Content |
+| GET | `/auth/sessions` | 활성 세션 목록 | - | UserSessionsResponse |
+| DELETE | `/auth/sessions` | 모든 세션 로그아웃 | - | 204 No Content |
+| DELETE | `/auth/sessions/{id}` | 특정 세션 로그아웃 | - | 204 No Content |
 
-### 게시판 API (/boards)
+### 커뮤니티 게시판 API (/boards)
 
 ```mermaid
 sequenceDiagram
@@ -73,7 +79,7 @@ sequenceDiagram
 | PUT | `/boards/{id}` | 게시판 수정 | BoardUpdateRequest | BoardResponse |
 | DELETE | `/boards/{id}` | 게시판 삭제 | - | 204 No Content |
 
-### 게시글 API
+### 커뮤니티 게시글 API
 
 ```mermaid
 sequenceDiagram
