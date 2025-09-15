@@ -14,3 +14,4 @@ class User(Base):
     
     boards = relationship("Board", back_populates="owner")
     posts = relationship("Post", back_populates="author")
+    sessions = relationship("Session", back_populates="user", cascade="all, delete-orphan")

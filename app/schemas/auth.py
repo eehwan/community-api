@@ -27,6 +27,7 @@ class RefreshResponse(BaseModel):
     expires_in: int
 
 class UserSession(BaseModel):
+    session_id: str
     device_name: str
     last_active: datetime
     ip_address: str
