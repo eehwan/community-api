@@ -6,7 +6,7 @@ from .base import Base
 class Post(Base):
     __tablename__ = "posts"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     title = Column(String(200), nullable=False)
     content = Column(Text, nullable=False)
     board_id = Column(Integer, ForeignKey("boards.id"), nullable=False)

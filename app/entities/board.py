@@ -6,8 +6,8 @@ from .base import Base
 class Board(Base):
     __tablename__ = "boards"
     
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100), unique=True, index=True, nullable=False)
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), unique=True, nullable=False)
     public = Column(Boolean, default=True, nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     post_count = Column(Integer, default=0, nullable=False)

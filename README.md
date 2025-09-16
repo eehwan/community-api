@@ -62,7 +62,7 @@ Redis에 누적된 게시글 증감량을 DB에 반영합니다.
 
 ```bash
 # 수동 실행
-make sync-post-count
+make board-sync
 ```
 
 향후 Airflow 또는 Cron Job으로 주기적 실행 예정

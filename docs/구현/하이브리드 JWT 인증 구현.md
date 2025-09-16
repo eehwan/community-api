@@ -150,12 +150,12 @@ CREATE TABLE sessions (
     revocation_reason VARCHAR(100)
 );
 
--- 성능 최적화 인덱스
-CREATE INDEX idx_sessions_user_active ON sessions (user_id) 
-WHERE revoked_at IS NULL;
-
-CREATE INDEX idx_sessions_expires ON sessions (expires_at);
-CREATE UNIQUE INDEX idx_sessions_refresh_token ON sessions (refresh_token_hash);
+-- 성능 최적화 인덱스 (SQLAlchemy로 자동 생성)
+-- PRIMARY KEY: id (자동)
+-- UNIQUE: refresh_token_hash (자동)  
+-- INDEX: user_id (FK 조회용)
+-- INDEX: expires_at (세션 정리/통계용)
+-- INDEX: revoked_at (감사/관리용)
 ```
 
 ## API 엔드포인트
@@ -242,9 +242,10 @@ def refresh_access_token(self, db: Session, refresh_token: str):
     if not session or session.revoked_at:
         raise HTTPException(status_code=401, detail="Invalid token")
     
-    # 2. 새 RT 생성 및 기존 RT 무효화
+    # 2. 새 RT 생성 및 기존 RT 무효화 (Rolling Expiry)
     new_refresh_token = create_refresh_token()
     session_repository.update_refresh_token(db, str(session.id), new_refresh_token)
+    # → expires_at도 30일 연장됨
     
     # 3. 새 AT 발급
     access_token = create_access_token({

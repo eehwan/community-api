@@ -9,7 +9,7 @@ from lib.auth import REFRESH_TOKEN_EXPIRE_SECONDS
 
 class SessionRepository:
     def create_device_session(self, db: Session, user_id: int, refresh_token: str, device_name: str, ip_address: str, user_agent: str = "") -> str:
-        """새 기기 세션 생성 - DB 저장만 (하이브리드 패턴)"""
+        """새 기기 세션 생성"""
         # refresh_token 해시화 (보안)
         token_hash = hashlib.sha256(refresh_token.encode()).hexdigest()
         
@@ -31,7 +31,7 @@ class SessionRepository:
         return str(session.id)
     
     def get_device_session(self, db: Session, refresh_token: str) -> Optional[SessionModel]:
-        """Refresh Token으로 세션 조회 (기존 이름 유지)"""
+        """Refresh Token으로 세션 조회"""
         token_hash = hashlib.sha256(refresh_token.encode()).hexdigest()
         return db.query(SessionModel).filter(
             and_(
@@ -53,8 +53,7 @@ class SessionRepository:
     
     
     def update_last_activity(self, db: Session, session_id: str):
-        """마지막 활동 시간 업데이트 (기존 이름 유지)"""
-        # DB 업데이트
+        """마지막 활동 시간 업데이트"""
         db.query(SessionModel).filter(SessionModel.id == session_id).update({
             "last_seen_at": datetime.now()
         })
@@ -65,13 +64,13 @@ class SessionRepository:
         token_hash = hashlib.sha256(new_refresh_token.encode()).hexdigest()
         db.query(SessionModel).filter(SessionModel.id == session_id).update({
             "refresh_token_hash": token_hash,
-            "last_seen_at": datetime.now()
+            "last_seen_at": datetime.now(),
+            "expires_at": datetime.now() + timedelta(seconds=REFRESH_TOKEN_EXPIRE_SECONDS)
         })
         db.commit()
     
     def revoke_device_session(self, db: Session, user_id: int, session_id: str, reason: str = "user_logout"):
         """특정 기기 세션 무효화 - RT 단계에서만 처리"""
-        # DB에서 revoked_at 설정 (하이브리드 패턴: RT에서만 상태 관리)
         db.query(SessionModel).filter(SessionModel.id == session_id).update({
             "revoked_at": datetime.now(),
             "revocation_reason": reason
@@ -80,7 +79,6 @@ class SessionRepository:
     
     def revoke_all_user_sessions(self, db: Session, user_id: int, reason: str = "logout_all"):
         """사용자의 모든 세션 무효화 - RT 갱신 시에만 차단"""
-        # 모든 활성 세션 무효화 (RT 갱신 차단)
         active_sessions = db.query(SessionModel).filter(
             and_(
                 SessionModel.user_id == user_id,

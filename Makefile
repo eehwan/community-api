@@ -26,5 +26,11 @@ clean:
 logs:
 	docker compose logs -f
 
-sync-post-count:
+board-sync:
 	docker compose run --rm api sh -c "./wait-for-it.sh postgres:5432; ./wait-for-it.sh redis:6379; python manage.py board syncwithredis"
+
+session-stats:
+	docker compose run --rm api sh -c "./wait-for-it.sh postgres:5432; python manage.py session stats"
+
+session-cleanup:
+	docker compose run --rm api sh -c "./wait-for-it.sh postgres:5432; python manage.py session cleanup"
